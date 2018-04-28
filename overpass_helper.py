@@ -1,35 +1,45 @@
 # Standard python imports
+import time
+import hashlib
 import logging
 logger = logging.getLogger('utility_to_osm.overpass_helper')
 
 # This project
 import file_util
+import overpass_helper
 
 # External dependencies:
 import osmapis
 
+osmapis_overpass = osmapis.OverpassAPI()
+osmapis_overpass.previous_request = 0#time.time()
 
-def overpass_xml(xml, old_age_days=7, conflate_cache_filename=None):
+def overpass_xml(xml, old_age_days=7, cache_filename=None):
     ''' Query the OverpassAPI with the given xml query, cache result for old_age_days days
-    in file conflate_cache_filename (defaults to conflate_cache_<md5(xml)>.osm)
+    in file cache_filename (defaults to cache_<md5(xml)>.osm)
     '''
-    if conflate_cache_filename is None:
-        filename = 'conflate_cache_' + hashlib.md5(xml).hexdigest() + '.osm'
+    if cache_filename is None:
+        filename = 'cache_' + hashlib.md5(xml).hexdigest() + '.osm'
     else:
-        filename = conflate_cache_filename
+        filename = cache_filename
     
     cached, outdated = file_util.cached_file(filename, old_age_days=old_age_days)
     if cached is not None and not(outdated):
-        print 'Using overpass responce stored as "%s". Delete this file if you want an updated version' % filename
+        logger.info('Using overpass responce stored as "%s". Delete this file if you want an updated version' % filename)
         try:
             return osmapis.OSMnsrid.from_xml(cached)
         except AttributeError:  # 'module' object has no attribute 'OSMnsrid'
             return osmapis.OSM.from_xml(cached)
 
-    o = osmapis.OverpassAPI()
-    osm = o.interpreter(xml)
+    time_since_last_request = time.time() - osmapis_overpass.previous_request
+    if time_since_last_request < 5:
+        logger.debug('backing off overpass for 1 seconds')
+        time.sleep(1)
+    
+    osm = osmapis_overpass.interpreter(xml)
+    osmapis_overpass.previous_request = time.time()
 
-    print 'Overpass responce stored as %s' % filename
+    logger.info('Overpass responce stored as %s' % filename)
     osm.save(filename)
 
     return osm

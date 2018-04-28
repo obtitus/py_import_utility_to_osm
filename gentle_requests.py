@@ -6,7 +6,10 @@ logger = logging.getLogger('utility_to_osm.gentle_requests')
 # Non-standard imports
 import requests
 # This project
-import file_util
+try:
+    import file_util
+except:
+    from . import file_util
 
 class GentleRequests(requests.Session):
     """Wrapper around the requests library that inserts a delay to avoid
@@ -52,7 +55,7 @@ class GentleRequests(requests.Session):
         while delta < 3600*self.retry_connection_error_hours:
             try:
                 return callback(url, *args, **kwargs)
-            except (requests.ConnectionError, requests.ReadTimeout) as e:
+            except (requests.ConnectionError, requests.ReadTimeout, requests.exceptions.ChunkedEncodingError) as e:
                 delta = time.time() - first_request
 
                 # decide on severity:

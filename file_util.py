@@ -6,6 +6,11 @@ import shutil
 import logging
 logger = logging.getLogger('utility_to_osm.file_util')
 
+import codecs
+def open_utf8(filename, *args, **kwargs):
+    logger.debug('open(%s, %s, %s)', filename, args, kwargs)
+    return codecs.open(filename, *args, encoding="utf-8-sig", **kwargs)
+
 def rename_file(filename, append):
     """Rename the file by appending, append (while keeping the file-extension). 
     IOError is raised if this would cause an overwrite."""
