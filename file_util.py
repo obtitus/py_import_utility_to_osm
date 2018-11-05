@@ -45,6 +45,21 @@ def file_age(filename):
     age = (now - fileChanged)/(60*60*24) # age of file in days
     return age
 
+def folder_modification(folder):
+    """Returns last modification to any file recursively inside folder as seconds since epoch.
+    Returns -1 if the folder is empty"""
+
+    # Not identical to?:
+    #time.ctime(max(os.path.getmtime(root) for root,_,_ in os.walk('/tmp/x')))
+    
+    last_mod = -1
+    for root, dirs, files in os.walk(folder):
+        for f in files:
+            m = os.path.getmtime(os.path.join(root, f))
+            last_mod = max(last_mod, m)
+    
+    return last_mod
+
 def cached_file(filename, old_age_days):
     """ Returns: (content, outdated)
     Returns a tuple of file content (if the file exists) 
