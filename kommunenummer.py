@@ -89,9 +89,10 @@ def get_osm_kommune_ids(root_template='', cache_dir='',
         ref = osm.relations[relation_id].tags['ref']
         kommuneNr_2_relationId[int(ref)] = int(relation_id)
 
-    # Workaround for Longyearbyen arealplanområde
-    if 2111 not in kommuneNr_2_relationId:
-        kommuneNr_2_relationId[2111] = 3245620
+    # Workaround for Longyearbyen arealplanområde, updated 2019.01.01
+    if 2100 not in kommuneNr_2_relationId:
+        kommuneNr_2_relationId[2100] = 3245620
+
     return kommuneNr_2_relationId
 
     

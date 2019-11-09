@@ -32,9 +32,9 @@ def overpass_xml(xml, old_age_days=7, cache_filename=None):
             return osmapis.OSM.from_xml(cached)
 
     time_since_last_request = time.time() - osmapis_overpass.previous_request
-    if time_since_last_request < 5:
-        logger.debug('backing off overpass for 1 seconds')
-        time.sleep(1)
+    if time_since_last_request < 10:
+        logger.debug('backing off overpass for 20 seconds')
+        time.sleep(20)
     
     osm = osmapis_overpass.interpreter(xml)
     osmapis_overpass.previous_request = time.time()
