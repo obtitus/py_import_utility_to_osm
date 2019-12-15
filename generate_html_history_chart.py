@@ -30,8 +30,6 @@ def render_history_chart(root, header=['Antall barnehager med no-barnehage:nsrid
     with open_utf8(chart_template) as f:
         chart_template = Template(f.read())
 
-    header = 
-
     data = list(get_history_data(history_filename))
     
     chart = chart_template.render(data=data,
