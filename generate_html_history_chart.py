@@ -21,20 +21,22 @@ def get_history_data(history_filename):
             row[1], row[2] = row[2], row[1]
             yield row
 
-def render_history_chart(root):
+def render_history_chart(root, header=['Antall barnehager med no-barnehage:nsrid i OSM', ''],
+                         title='Totalt antall barnehager og antall importerte',
+                         chart_id='id_history'):
     history_filename = os.path.join(root, 'history.csv')
     chart_template = os.path.join(root, 'templates', 'draw_chart_template.js')
     
     with open_utf8(chart_template) as f:
         chart_template = Template(f.read())
 
-    header = ['Antall barnehager med no-barnehage:nsrid i OSM', '']
+    header = 
 
     data = list(get_history_data(history_filename))
     
     chart = chart_template.render(data=data,
-                                  title='Totalt antall barnehager og antall importerte',
-                                  chart_id='id_history',
+                                  title=title,
+                                  chart_id=chart_id,
                                   header=header)
     return chart
             
