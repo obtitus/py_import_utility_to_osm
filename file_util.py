@@ -37,7 +37,10 @@ def write_file(filename, content):
     """Write content to filename, tries to create dirname if the folder does not exist."""
     create_dirname(filename)
     with open(filename, 'w') as f:
-        return f.write(content)
+        try:
+            return f.write(content)
+        except:
+            return f.write(content.decode())
 
 def file_age(filename):
     fileChanged = os.path.getmtime(filename)

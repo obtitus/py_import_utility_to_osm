@@ -12,7 +12,7 @@ from jinja2 import Template
 def get_history_data(history_filename):
     with open(history_filename, 'r') as f:
         reader = csv.reader(f)
-        reader.next() # skip header
+        next(reader) # skip header
         for row in reader:
             row[0] = float(row[0])
             row[1] = int(row[1]) - int(row[2])

@@ -5,11 +5,10 @@ import logging
 logger = logging.getLogger('utility_to_osm.overpass_helper')
 
 # This project
-import file_util
-import overpass_helper
+from . import file_util
 
 # External dependencies:
-import osmapis
+from .osmapis import osmapis
 
 osmapis_overpass = osmapis.OverpassAPI()
 osmapis_overpass.previous_request = 0#time.time()
@@ -33,8 +32,8 @@ def overpass_xml(xml, old_age_days=7, cache_filename=None):
 
     time_since_last_request = time.time() - osmapis_overpass.previous_request
     if time_since_last_request < 10:
-        logger.debug('backing off overpass for 20 seconds')
-        time.sleep(20)
+        logger.debug('backing off overpass for 60 seconds')
+        time.sleep(60)
     
     osm = osmapis_overpass.interpreter(xml)
     osmapis_overpass.previous_request = time.time()

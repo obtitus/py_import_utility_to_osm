@@ -15,7 +15,7 @@ class GentleRequests(requests.Session):
     """Wrapper around the requests library that inserts a delay to avoid
     excessive load on the server.
     NOTE: currently only wraps get() and post() calls"""
-    def __init__(self, N_delay=10, delay_seconds=30, retry_connection_error_hours=24,
+    def __init__(self, N_delay=10, delay_seconds=30, retry_connection_error_hours=1,
                  info = 'Barnehagefakta to Openstreetmap (https://github.com/obtitus/barnehagefakta_osm) '):
         """For every N_delay requests, delay by delay_seconds, if connection failure, retry for retry_connection_error_hours"""
         self.N_delay = N_delay
