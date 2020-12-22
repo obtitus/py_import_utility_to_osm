@@ -8,7 +8,7 @@ logger = logging.getLogger('utility_to_osm.overpass_helper')
 from . import file_util
 
 # External dependencies:
-from .osmapis import osmapis
+from . import osmapis
 
 osmapis_overpass = osmapis.OverpassAPI()
 osmapis_overpass.previous_request = 0#time.time()
