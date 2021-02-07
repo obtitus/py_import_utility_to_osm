@@ -6,8 +6,6 @@ logger = logging.getLogger('utility_to_osm.overpass_helper')
 
 # This project
 from . import file_util
-
-# External dependencies:
 from . import osmapis
 
 osmapis_overpass = osmapis.OverpassAPI()
