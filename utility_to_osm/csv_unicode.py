@@ -1,4 +1,9 @@
-import csv, codecs, cStringIO
+import csv, codecs
+try:
+    from cStringIO import StringIO
+except ImportError:
+    # This whole file is probably no longer needed in python3, but lets just keep it.
+    from io import StringIO
 
 # https://docs.python.org/2/library/csv.html
 class UnicodeWriter:
@@ -9,7 +14,7 @@ class UnicodeWriter:
 
     def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
         # Redirect output to a queue
-        self.queue = cStringIO.StringIO()
+        self.queue = StringIO()
         self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
         self.stream = f
         self.encoder = codecs.getincrementalencoder(encoding)()
@@ -29,3 +34,6 @@ class UnicodeWriter:
     def writerows(self, rows):
         for row in rows:
             self.writerow(row)
+
+if __name__ == '__main__':
+    UnicodeWriter(None)
