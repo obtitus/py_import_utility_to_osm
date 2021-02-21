@@ -28,7 +28,11 @@ __version__ = "0.9.3"
 
 from abc import ABCMeta, abstractmethod
 from base64 import b64encode
-from collections import MutableSet, MutableMapping
+try:
+    from collections.abc import MutableSet, MutableMapping
+except ImportError:
+    from collections import MutableSet, MutableMapping
+    
 from itertools import chain
 import logging
 import os
@@ -1667,6 +1671,12 @@ class XMLElement(object):
             res = res.decode("utf-8")
         return res
 
+    def __hash__(self):
+        '''
+        Return hash of object
+        '''
+        return hash(self.to_xml())    
+    
 
 class OSMElement(XMLElement):
     """
@@ -1906,6 +1916,13 @@ class Way(OSMPrimitive):
             return NotImplemented
         return self.id == other.id and self.version == other.version and self.tags == other.tags and self.nds == other.nds
 
+
+    def __hash__(self):
+        '''
+        Return hash of object
+        '''
+        return super().__hash__() + hash(self.id) + hash(self.version)
+    
     def __ne__(self, other):
         if not isinstance(other, Way):
             return NotImplemented
@@ -2374,3 +2391,8 @@ class APIError(Exception):
             if len(self.reason) > 0:
                 msg += " " + self.reason
         return msg
+
+if __name__ == '__main__':
+    s = set()
+    way = Way()
+    s.add(way)
