@@ -1845,6 +1845,12 @@ class Node(OSMPrimitive):
             return NotImplemented
         return not self.__eq__(other)
 
+    def __hash__(self):
+        '''
+        Return hash of object
+        '''
+        return super().__hash__() + hash(self.id) + hash(self.version)
+    
 
 class Way(OSMPrimitive):
     """
@@ -2022,6 +2028,12 @@ class Relation(OSMPrimitive):
             return NotImplemented
         return not self.__eq__(other)
 
+    def __hash__(self):
+        '''
+        Return hash of object
+        '''
+        return super().__hash__() + hash(self.id) + hash(self.version)
+    
     def __contains__(self, item):
         if not isinstance(item, (Node, Way, Relation)):
             raise NotImplementedError
