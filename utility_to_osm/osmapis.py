@@ -28,11 +28,7 @@ __version__ = "0.9.3"
 
 from abc import ABCMeta, abstractmethod
 from base64 import b64encode
-try:
-    from collections.abc import MutableSet, MutableMapping
-except ImportError:
-    from collections import MutableSet, MutableMapping
-    
+from collections import MutableSet, MutableMapping
 from itertools import chain
 import logging
 import os
@@ -40,15 +36,14 @@ import os.path
 from time import sleep
 import xml.etree.cElementTree as ET
 try:
-    from http.client import HTTPSConnection
+    from http.client import HTTPConnection
 except ImportError:
-    from httplib import HTTPSConnection
+    from httplib import HTTPConnection
 try:
     from urllib.parse import unquote, urlencode
 except ImportError:
     from urllib import unquote, urlencode
 
-import requests
 
 __all__ = ["wrappers",
            "OverpassAPI",
@@ -94,7 +89,6 @@ class HTTPClient(object):
 
     headers = {}
     headers["User-agent"] = "osmapis/{0}".format(__version__)
-    headers["Host"] = 'www.openstreetmap.org:80'
     log = logging.getLogger("osmapis.http")
 
     @classmethod
@@ -116,21 +110,15 @@ class HTTPClient(object):
             retry       --- Number of re-attempts on error.
 
         """
-        #cls.log.debug("{}({}) {}{} << payload {}".format(method, retry, server, path, payload is not None))
-        #print("{}({}) {}{} << payload {}".format(method, retry, server, path, payload is not None))
+        cls.log.debug("{}({}) {}{} << payload {}".format(method, retry, server, path, payload is not None))
         req_headers = dict(cls.headers)
         req_headers.update(headers)
         if payload is not None and not isinstance(payload, bytes):
             payload = payload.encode("utf-8")
-        connection = HTTPSConnection(server)
+        connection = HTTPConnection(server)
         connection.connect()
         connection.request(method, path, payload, req_headers)
-        #req = request.
         response = connection.getresponse()
-        if response.status != 200 and retry <= -1:
-            connection.close()
-            raise APIError('giving up retrying, response = %s, %s', response.status, response.reason)
-
         if response.status == 200:
             body = response.read()
             connection.close()
@@ -146,12 +134,11 @@ class HTTPClient(object):
                 cls.log.error("Got code {}, but no location header.".format(response.status))
                 raise APIError("Unable to redirect the request.", payload)
             url = unquote(url)
-            #cls.log.debug("Redirecting to {}".format(url))
-            print("Redirecting {} {} to {} due to status {} {}".format(server, path, url, response.status, response.reason))
+            cls.log.debug("Redirecting to {}".format(url))
             url = url.split("/", 3)
             server = url[2]
             path = "/" + url[3]
-            return cls.request(server, path, method=method, headers=headers, payload=payload, retry=retry-1)
+            return cls.request(server, path, method=method, headers=headers, payload=payload, retry=retry)
         elif 400 <= response.status < 500:
             body = response.read().decode("utf-8", "replace").strip()
             if not isinstance(body, str):
@@ -726,7 +713,7 @@ class BaseWriteAPI(object):
             changeset   --- Changeset wrapper, changeset id or None (create new).
 
         """
-        if not isinstance(relation, Relation):
+        if not isinstance(element, Relation):
             raise TypeError("Element must be Relation instance.")
         return self.delete_element(element, changeset)
 
@@ -1671,13 +1658,6 @@ class XMLElement(object):
             res = res.decode("utf-8")
         return res
 
-    def __hash__(self):
-        '''
-        Return hash of object
-        '''
-        return hash(self.to_xml())    
-    
-
 class OSMElement(XMLElement):
     """
     Abstract wrapper for node, way, relation and changeset.
@@ -1846,11 +1826,7 @@ class Node(OSMPrimitive):
         return not self.__eq__(other)
 
     def __hash__(self):
-        '''
-        Return hash of object
-        '''
-        return super().__hash__() + hash(self.id) + hash(self.version)
-    
+        return hash(self.__str__())
 
 class Way(OSMPrimitive):
     """
@@ -1922,13 +1898,6 @@ class Way(OSMPrimitive):
             return NotImplemented
         return self.id == other.id and self.version == other.version and self.tags == other.tags and self.nds == other.nds
 
-
-    def __hash__(self):
-        '''
-        Return hash of object
-        '''
-        return super().__hash__() + hash(self.id) + hash(self.version)
-    
     def __ne__(self, other):
         if not isinstance(other, Way):
             return NotImplemented
@@ -1939,6 +1908,9 @@ class Way(OSMPrimitive):
             raise NotImplementedError
         return item.id in self.nds
 
+    def __hash__(self):
+        return hash(self.__str__())
+    
     def to_xml(self, strip=()):
         """
         Get ET.Element representation of wrapper.
@@ -2029,11 +2001,8 @@ class Relation(OSMPrimitive):
         return not self.__eq__(other)
 
     def __hash__(self):
-        '''
-        Return hash of object
-        '''
-        return super().__hash__() + hash(self.id) + hash(self.version)
-    
+        return hash(self.__str__())
+   
     def __contains__(self, item):
         if not isinstance(item, (Node, Way, Relation)):
             raise NotImplementedError
@@ -2123,10 +2092,7 @@ class OSM(XMLElement, XMLFile, MutableSet):
             for element in data.findall(elem_type):
                 element = wrappers[elem_type].from_xml(element)
                 if element.id in containers[elem_type]:
-                    # try:
                     containers[elem_type][element.id] = containers[elem_type][element.id].merge_history(element)
-                    # except ValueError:
-                    #     containers[elem_type][element.id] = element
                 else:
                     containers[elem_type][element.id] = element
         return cls(chain(containers["node"].values(), containers["way"].values(), containers["relation"].values()))
@@ -2403,8 +2369,3 @@ class APIError(Exception):
             if len(self.reason) > 0:
                 msg += " " + self.reason
         return msg
-
-if __name__ == '__main__':
-    s = set()
-    way = Way()
-    s.add(way)

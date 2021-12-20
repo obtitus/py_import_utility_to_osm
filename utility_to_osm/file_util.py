@@ -46,6 +46,7 @@ def file_age(filename):
     fileChanged = os.path.getmtime(filename)
     now = time.time()
     age = (now - fileChanged)/(60*60*24) # age of file in days
+    logger.info('file_age(%s) -> %.1f days', filename, age)
     return age
 
 def folder_modification(folder):
