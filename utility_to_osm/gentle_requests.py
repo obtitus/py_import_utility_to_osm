@@ -88,34 +88,36 @@ class GentleRequests(requests.Session):
         return self.wrapper_cached(self.post, url, cache_filename,
                                    old_age_days=old_age_days, timeout=60, **kwargs)
     
-    def wrapper_cached(self, callback, url, cache_filename, old_age_days=30, **kwargs):
-        cached, outdated = file_util.cached_file(cache_filename, old_age_days)
+    def wrapper_cached(self, callback, url, cache_filename, old_age_days=30, file_mode='', **kwargs):
+        cached, outdated = file_util.cached_file(cache_filename, old_age_days, mode='r'+file_mode)
         if cached is not None and not(outdated):
             #logger.info('returning cached %s %s', cached is not None, not(outdated))
             return cached
 
-        # Hmm, getting some half-downloaded files with requests library, lets try urllib instead
-        try:
-            urlretrieve(url, cache_filename)
-        except Exception as e:
-            try: os.remove(cache_filename) # ensure we don't have a half finished download
-            except: pass
-            logger.error('Failure downloading %s, %s', url, e)
-            return None
-            
-        return file_util.read_file(cache_filename)
-        
+        # # Hmm, getting some half-downloaded files with requests library, lets try urllib instead
         # try:
-        #     r = callback(url, **kwargs) #self.get(url, **kwargs)
-        # except requests.ConnectionError as e:
-        #     logger.error('Could not connect to %s, try again later? %s', url, e)
+        #     urlretrieve(url, cache_filename)
+        # except Exception as e:
+        #     try: os.remove(cache_filename) # ensure we don't have a half finished download
+        #     except: pass
+        #     logger.error('Failure downloading %s, %s', url, e)
         #     return None
+            
+        # return file_util.read_file(cache_filename)
+        
+        try:
+            r = callback(url, **kwargs) #self.get(url, **kwargs)
+        except requests.ConnectionError as e:
+            logger.error('Could not connect to %s, try again later? %s', url, e)
+            return None
 
-        # logger.info('requested %s %s, got %s', url, cache_filename, r)
-        # if r.status_code == 200:
-        #     ret = r.content
-        #     file_util.write_file(cache_filename, ret)
-        #     return ret
-        # else:
-        #     logger.error('Invalid status code %s', r.status_code)
-        #     return None
+        logger.info('requested %s %s, got %s', url, cache_filename, r)
+        if r.status_code == 200:
+            ret = r.content
+            file_util.write_file(cache_filename, ret, mode='w'+file_mode)
+            return ret
+        else:
+            logger.error('Invalid status code %s', r.status_code)
+            return None
+
+
