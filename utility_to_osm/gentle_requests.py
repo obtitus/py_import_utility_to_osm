@@ -1,8 +1,13 @@
 # Standard python imports
+import os
 import time
 import datetime
 import logging
 logger = logging.getLogger('utility_to_osm.gentle_requests')
+
+# lets try this instead
+from urllib.request import urlretrieve
+
 # Non-standard imports
 import requests
 # This project
@@ -55,7 +60,7 @@ class GentleRequests(requests.Session):
         while delta < 3600*self.retry_connection_error_hours:
             try:
                 return callback(url, *args, **kwargs)
-            except (requests.ConnectionError, requests.ReadTimeout, requests.exceptions.ChunkedEncodingError) as e:
+            except (requests.ConnectionError, requests.ReadTimeout, requests.exceptions.Timeout, requests.exceptions.ChunkedEncodingError) as e:
                 delta = time.time() - first_request
 
                 # decide on severity:
@@ -76,16 +81,30 @@ class GentleRequests(requests.Session):
         return callback(url, *args, **kwargs)
 
     def get_cached(self, url, cache_filename, old_age_days=30, **kwargs):
-        return self.wrapper_cached(self.get, url, cache_filename, old_age_days=30, **kwargs)
+        return self.wrapper_cached(self.get, url, cache_filename,
+                                   old_age_days=old_age_days, timeout=60, **kwargs)
 
     def post_cached(self, url, cache_filename, old_age_days=30, **kwargs):
-        return self.wrapper_cached(self.post, url, cache_filename, old_age_days=30, **kwargs)
+        return self.wrapper_cached(self.post, url, cache_filename,
+                                   old_age_days=old_age_days, timeout=60, **kwargs)
     
-    def wrapper_cached(self, callback, url, cache_filename, old_age_days=30, **kwargs):
-        cached, outdated = file_util.cached_file(cache_filename, old_age_days)
+    def wrapper_cached(self, callback, url, cache_filename, old_age_days=30, file_mode='', **kwargs):
+        cached, outdated = file_util.cached_file(cache_filename, old_age_days, mode='r'+file_mode)
         if cached is not None and not(outdated):
+            #logger.info('returning cached %s %s', cached is not None, not(outdated))
             return cached
 
+        # # Hmm, getting some half-downloaded files with requests library, lets try urllib instead
+        # try:
+        #     urlretrieve(url, cache_filename)
+        # except Exception as e:
+        #     try: os.remove(cache_filename) # ensure we don't have a half finished download
+        #     except: pass
+        #     logger.error('Failure downloading %s, %s', url, e)
+        #     return None
+            
+        # return file_util.read_file(cache_filename)
+        
         try:
             r = callback(url, **kwargs) #self.get(url, **kwargs)
         except requests.ConnectionError as e:
@@ -95,8 +114,10 @@ class GentleRequests(requests.Session):
         logger.info('requested %s %s, got %s', url, cache_filename, r)
         if r.status_code == 200:
             ret = r.content
-            file_util.write_file(cache_filename, ret)
+            file_util.write_file(cache_filename, ret, mode='w'+file_mode)
             return ret
         else:
             logger.error('Invalid status code %s', r.status_code)
             return None
+
+

@@ -29,14 +29,14 @@ def create_dirname(filename):
         os.mkdir(dirname)
     return filename
 
-def read_file(filename):
-    with open(filename, 'r') as f:
+def read_file(filename, mode='r'):
+    with open(filename, mode) as f:
         return f.read()
 
-def write_file(filename, content):
+def write_file(filename, content, mode='w'):
     """Write content to filename, tries to create dirname if the folder does not exist."""
     create_dirname(filename)
-    with open(filename, 'w') as f:
+    with open(filename, mode) as f:
         try:
             return f.write(content)
         except:
@@ -46,6 +46,7 @@ def file_age(filename):
     fileChanged = os.path.getmtime(filename)
     now = time.time()
     age = (now - fileChanged)/(60*60*24) # age of file in days
+    logger.info('file_age(%s) -> %.1f days', filename, age)
     return age
 
 def folder_modification(folder):
@@ -63,7 +64,7 @@ def folder_modification(folder):
     
     return last_mod
 
-def cached_file(filename, old_age_days):
+def cached_file(filename, old_age_days, mode='r'):
     """ Returns: (content, outdated)
     Returns a tuple of file content (if the file exists) 
     and a boolean for file age older than old_age_days.
@@ -71,7 +72,7 @@ def cached_file(filename, old_age_days):
     """
     if os.path.exists(filename):
         age = file_age(filename)
-        content = read_file(filename)
+        content = read_file(filename, mode=mode)
         return content, age > old_age_days
     else:
         return None, True
