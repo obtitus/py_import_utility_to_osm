@@ -6,7 +6,8 @@
 # Standard Imports
 import os
 import re
-import cgi
+#import cgi
+import html
 try:
     from html.parser import HTMLParser
 except ImportError:
@@ -72,7 +73,7 @@ def htmlDecode(s):
     return h.unescape(s)
 
 
-def htmlEncode(s, esc=cgi.escape):
+def htmlEncode(s, esc=html.escape):
     return esc(s, 1)
 
 ########################################################################
